@@ -9,7 +9,6 @@ public class PlayerController : MonoBehaviour
     public GameObject sprite;
     private Rigidbody2D rb;
     public float rotationSpeed = 5f;
-    public Vector3 direction = new Vector3(1,1,0);
     public float launchForce = 10f;
     public float zoomOutAmount = 5f;
     public float zoomSpeed = 1.5f;
@@ -19,7 +18,7 @@ public class PlayerController : MonoBehaviour
     private Coroutine zoomCoroutine;
     // public float raycastDistance = 1f;
  
-    void Start()
+    void Awake()
     {
         virtualCamera = FindObjectOfType<CinemachineVirtualCamera>();
         originalOrthographicSize = virtualCamera.m_Lens.OrthographicSize;
@@ -38,11 +37,11 @@ public class PlayerController : MonoBehaviour
         //         // Debug.Log(hit.collider.name + " hit by raycast");
         //         Debug.DrawRay(transform.position, -transform.up * raycastDistance, Color.red);
 
-                if (Input.GetMouseButtonDown(0)) // Left mouse button
-                {
-                    UpdateZoom();
-                    ApplyUpForce();
-                }
+                // if (Input.GetMouseButtonDown(0)) // Left mouse button
+                // {
+                //     UpdateZoom();
+                //     ApplyUpForce();
+                // }
         // } 
     }
 
@@ -86,9 +85,36 @@ public class PlayerController : MonoBehaviour
         sprite.transform.Rotate(transform.forward, rotationSpeed * Time.deltaTime);
     }
 
-    void ApplyUpForce()
+    public void ResetRotation(){
+        sprite.transform.Rotate(new Vector3(0,0,-65), Space.Self);
+    }
+
+    public void ApplyUpForce()
     {
+        UpdateZoom();
         rb.velocity = Vector2.zero;
-        rb.AddForce(direction * launchForce, ForceMode2D.Impulse);
+        rb.AddForce(new Vector3(1,1,0) * launchForce, ForceMode2D.Impulse);
+    }
+
+    public void ApplyDownForce()
+    {
+        UpdateZoom();
+        rb.velocity = Vector2.zero;
+        rb.AddForce(new Vector3(1,-1,0) * launchForce, ForceMode2D.Impulse);
+    }
+
+    public void FreezeControl(){
+        rb.isKinematic = true;
+    }
+
+    public void UnFreezeControl(){
+        rb.isKinematic = false;
+    }
+
+    public bool IsPlayerDead(){
+        if(rb.velocity.magnitude <= 1){
+            return true;
+        }
+        return false;
     }
 }
