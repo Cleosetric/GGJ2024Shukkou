@@ -11,7 +11,7 @@ public class Bouncer : Boost
         base.ApplyBoost(rb); // Call the base ApplyBoost method to apply the boost force
 
         // Apply additional bounce force
-        rb.AddForce(new Vector3(1,1,0) * boostForce, ForceMode2D.Impulse);
+        rb.AddForce(new Vector3(1,1,0) * bounceForce, ForceMode2D.Impulse);
 
     }
 }

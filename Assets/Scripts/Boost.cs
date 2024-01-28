@@ -5,14 +5,11 @@ using UnityEngine;
 
 public class Boost : MonoBehaviour
 {
-    public float boostForce = 10f;
-
-    
-    private void OnTriggerEnter2D(Collider2D other)
+    private void OnCollisionEnter2D(Collision2D other)
     {
-        if (other != null && other.CompareTag("Player"))
+        if (other != null && other.gameObject.CompareTag("Player"))
         {
-            ApplyBoost(other.GetComponent<Rigidbody2D>());
+            ApplyBoost(other.gameObject.GetComponent<Rigidbody2D>());
         }
     }
 
