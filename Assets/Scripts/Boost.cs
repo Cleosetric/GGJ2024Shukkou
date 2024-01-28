@@ -9,7 +9,8 @@ public class Boost : MonoBehaviour
     {
         if (other != null && other.gameObject.CompareTag("Player"))
         {
-            ApplyBoost(other.gameObject.GetComponent<Rigidbody2D>());
+            other.GetComponent<PlayerController>().UpdateZoom();
+            ApplyBoost(other.GetComponent<Rigidbody2D>());
         }
     }
 
