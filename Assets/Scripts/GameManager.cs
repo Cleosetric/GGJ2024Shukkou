@@ -3,21 +3,37 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using System.Collections;
+using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
+    [Header("Settings")]
+    public int startingLives = 3; // Number of starting lives
+    public float minDeathSpeed = 5;
+    public float distanceThreshold = 10f; // Distance threshold for each slider increment
+    public float maxDistancePower = 100;
+    [Header("Object Reference")]
+    [Space]
     public GameObject player;
     public GameObject playerUI;
     public GameObject gameOverUI;
     public Transform firstPoint;
-    
+    [Header("UI Reference")]
+    [Space]
     public TextMeshProUGUI textScoreGameOver;
     public TextMeshProUGUI textScore;
-    public TextMeshProUGUI textLive;
-    public int startingLives = 3; // Number of starting lives
-    private int lives; // Current lives count
+    public List<Image> liveIcons;
+    public Slider sliderPower;
+
     private static GameManager instance;
+    private bool isPowerActive;
     private bool isGameStart;
+    private int lives; 
+    private float distance;
+    private float distancePowerUp;
+    private Vector3 lastDistancePoint;
+
 
     // Singleton pattern to ensure only one instance of GameManager exists
     public static GameManager Instance
@@ -53,24 +69,25 @@ public class GameManager : MonoBehaviour
         
     }
 
-    private void Start(){
+    private void Start()
+    {
         isGameStart = false;
-        if(player != null){
-            player.GetComponent<PlayerController>().ResetRotation();
-            player.transform.position = new Vector3(35,6,0);
-            player.GetComponent<PlayerController>().FreezeControl();
-            player.GetComponent<PlayerController>().enabled = false;
-            playerUI.gameObject.SetActive(false);
-            gameOverUI.SetActive(false);
-        }else{
+        isPowerActive = false;
+
+        if(player == null){
             player = FindObjectOfType<PlayerController>().gameObject;
-            player.transform.position = new Vector3(35,6,0);
-            player.GetComponent<PlayerController>().ResetRotation();
-            player.GetComponent<PlayerController>().FreezeControl();
-            player.GetComponent<PlayerController>().enabled = false;
-            playerUI.gameObject.SetActive(false);
-            gameOverUI.SetActive(false);
         }
+        player.GetComponent<PlayerController>().ResetRotation();
+        player.transform.position = new Vector3(35,6,0);
+        player.GetComponent<PlayerController>().FreezeControl();
+        player.GetComponent<PlayerController>().enabled = false;
+        playerUI.gameObject.SetActive(false);
+
+        // foreach (Image iconImage in liveIcons)
+        // {
+        //     iconImage.color = new Color32(255,255,255,255);
+        // }
+        gameOverUI.SetActive(false);
     }
     
     private void Update(){
@@ -81,7 +98,7 @@ public class GameManager : MonoBehaviour
         }
 
         if(isGameStart){
-        CalculatePointDistance();
+            CalculatePointDistance();
         }
         CheckGameOver();
     }
@@ -98,15 +115,16 @@ public class GameManager : MonoBehaviour
 
     private void CalculatePointDistance()
     {
-        if(player != null){
+        if(player != null)
+        {
+            // Calculate the distance between the player and the first point
+            distance = Vector3.Distance(player.transform.position, firstPoint.position);
+            // Convert the distance to meters (assuming 1 Unity unit = 1 meter)
+            float distanceInMeters = distance / distanceThreshold;
 
-        // Calculate the distance between the player and the first point
-        float distance = Vector3.Distance(player.transform.position, firstPoint.position);
-
-        // Convert the distance to meters (assuming 1 Unity unit = 1 meter)
-        float distanceInMeters = distance / 10;
-        textScore.SetText("Distance : "+ distanceInMeters.ToString("F2") + " meter");
-        textScoreGameOver.SetText("Distance : "+ distanceInMeters.ToString("F2") + " meter");
+            textScore.SetText("Distance : "+ distanceInMeters.ToString("F2") + " meter");
+            textScoreGameOver.SetText("Distance : "+ distanceInMeters.ToString("F2") + " meter");
+            UpdatePowerUp();
         }
     }
 
@@ -115,30 +133,79 @@ public class GameManager : MonoBehaviour
         if(lives > 0){
             player.GetComponent<PlayerController>().ApplyUpForce();
             lives--;
-            textLive.SetText("Lives : "+lives);
+            UpdateLives();
+        }
+    }
+
+    
+    public void ControlDown(){
+        if(isPowerActive){
+            player.GetComponent<PlayerController>().ApplyDownForce();
+            ResetPowerUp();
+        }
+    }
+
+    private void UpdatePowerUp()
+    {
+        if(!isPowerActive)
+        {
+            distancePowerUp = Vector3.Distance(player.transform.position, lastDistancePoint);
+
+            float distanceInMeters = distancePowerUp / distanceThreshold;
+            float normalizedDistance = Mathf.Clamp01(distanceInMeters / maxDistancePower);
+            float sliderValue = normalizedDistance * 10f * 0.1f;
+
+            // Update the slider value
+            sliderPower.value = sliderValue;
+
+            if(sliderPower.value >= 1){
+                isPowerActive = true;
+            }
+        }
+    }
+
+    private void ResetPowerUp(){
+        sliderPower.value = 0;
+        lastDistancePoint = player.transform.position;
+        isPowerActive = false;
+    }
+
+    private void UpdateLives()
+    {
+        int iconsToDim = Mathf.Clamp(startingLives - lives, 0, startingLives);
+        for (int i = 0; i < liveIcons.Count; i++)
+        {
+            if (i < iconsToDim)
+            {
+                liveIcons[i].color = new Color32(255,255,255,150);
+            }
+            else
+            {
+                liveIcons[i].color = new Color32(255,255,255,255);
+            }
         }
     }
 
     public void AddLive(){
-        lives++;
-        textLive.SetText("Lives : "+lives);
-    }
-
-    public void ControlDown(){
-        player.GetComponent<PlayerController>().ApplyDownForce();
+        if(lives < startingLives){
+            lives++;
+            UpdateLives();
+        }
     }
 
     public void StartGame()
     {
         Debug.Log("Game Started!");
         if(player != null){
+            sliderPower.value = 0;
             lives = startingLives;
-            textLive.SetText("Lives : "+lives);
+            UpdateLives();
             player.GetComponent<PlayerController>().UnFreezeControl();
             player.GetComponent<PlayerController>().enabled = true;
-            ControlUp();
+            player.GetComponent<PlayerController>().ApplyUpForce();
             playerUI.gameObject.SetActive(true);
             isGameStart = true;
+            lastDistancePoint = firstPoint.transform.position;
         }
     }
 

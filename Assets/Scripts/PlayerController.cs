@@ -1,48 +1,48 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using Cinemachine;
-using Unity.VisualScripting;
+using TMPro;
 
 public class PlayerController : MonoBehaviour
 {
-    public GameObject sprite;
-    private Rigidbody2D rb;
     public float rotationSpeed = 5f;
     public float launchForce = 10f;
     public float zoomOutAmount = 5f;
     public float zoomSpeed = 1.5f;
     public float zoomDuration = 3f;
+    public float raycastDistance;
+    public GameObject sprite;
+    public TextMeshProUGUI textSpeed;
     private float originalOrthographicSize;
+    private Rigidbody2D rb;
     private CinemachineVirtualCamera virtualCamera;
     private Coroutine zoomCoroutine;
-    // public float raycastDistance = 1f;
- 
+    float previousSpeed;
+
     void Awake()
     {
         virtualCamera = FindObjectOfType<CinemachineVirtualCamera>();
         originalOrthographicSize = virtualCamera.m_Lens.OrthographicSize;
         rb = GetComponent<Rigidbody2D>();
+        textSpeed.SetText("");
     } 
 
     void Update()
     {
         RotateCylinder();
-
-        
-        //     RaycastHit2D hit = Physics2D.Raycast(transform.position, -transform.up, raycastDistance);
-        //     Debug.DrawRay(transform.position, -transform.up * raycastDistance, Color.white);
-        //     if (hit.collider != null)
-        //     { 
-        //         // Debug.Log(hit.collider.name + " hit by raycast");
-        //         Debug.DrawRay(transform.position, -transform.up * raycastDistance, Color.red);
-
-                // if (Input.GetMouseButtonDown(0)) // Left mouse button
-                // {
-                //     UpdateZoom();
-                //     ApplyUpForce();
-                // }
+        // RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, raycastDistance);
+        // Debug.DrawRay(transform.position, Vector2.down * raycastDistance, Color.white);
+        // if (hit.collider != null && hit.collider.CompareTag("Platform"))
+        // {
+        //     Debug.DrawRay(transform.position, Vector2.down * raycastDistance, Color.red);
+        //     virtualCamera.m_Lens.OrthographicSize = Mathf.Lerp(virtualCamera.m_Lens.OrthographicSize, zoomOutAmount, Time.deltaTime * zoomDuration);
         // } 
+
+        previousSpeed = rb.velocity.magnitude;
+        string speed = Mathf.FloorToInt(previousSpeed).ToString();
+        textSpeed.SetText(speed);
     }
 
     public void UpdateZoom(){
@@ -92,15 +92,23 @@ public class PlayerController : MonoBehaviour
     public void ApplyUpForce()
     {
         UpdateZoom();
-        rb.velocity = Vector2.zero;
-        rb.AddForce(new Vector3(1,1,0) * launchForce, ForceMode2D.Impulse);
+        float previousSpeed = rb.velocity.magnitude;
+        rb.velocity = Vector3.zero;
+        float accumulatedVelocityMagnitude = previousSpeed + launchForce;
+        Vector3 launchDirection = new Vector3(1, 1, 0).normalized;
+        Vector3 finalForce = launchDirection * accumulatedVelocityMagnitude;
+        rb.AddForce(finalForce, ForceMode2D.Impulse);
     }
 
     public void ApplyDownForce()
     {
         UpdateZoom();
-        rb.velocity = Vector2.zero;
-        rb.AddForce(new Vector3(1,-1,0) * launchForce, ForceMode2D.Impulse);
+        float previousSpeed = rb.velocity.magnitude;
+        rb.velocity = Vector3.zero;
+        float accumulatedVelocityMagnitude = previousSpeed + launchForce;
+        Vector3 launchDirection = new Vector3(1, -1, 0).normalized;
+        Vector3 finalForce = launchDirection * accumulatedVelocityMagnitude;
+        rb.AddForce(finalForce, ForceMode2D.Impulse);
     }
 
     public void FreezeControl(){
@@ -112,9 +120,21 @@ public class PlayerController : MonoBehaviour
     }
 
     public bool IsPlayerDead(){
-        if(rb.velocity.magnitude <= 1){
+        if(rb.velocity.magnitude < GameManager.Instance.minDeathSpeed){
+            textSpeed.SetText("");
             return true;
         }
         return false;
+    }
+
+    private void OnCollisionEnter2D(Collision2D other) {
+        if(other != null && other.gameObject.CompareTag("Platform")){
+            UpdateZoom();
+            Debug.Log("Touch Platform");
+            rb.velocity = Vector3.zero;
+            Vector3 launchDirection = new Vector3(1, -1, 0).normalized;
+            Vector3 finalForce = launchDirection * previousSpeed;
+            rb.AddForce(finalForce, ForceMode2D.Impulse);
+        }
     }
 }

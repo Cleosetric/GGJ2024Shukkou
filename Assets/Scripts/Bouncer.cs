@@ -4,14 +4,14 @@ using UnityEngine;
 
 public class Bouncer : Boost
 {
-    public float bounceForce = 5f;
-
     protected override void ApplyBoost(Rigidbody2D rb)
     {
         base.ApplyBoost(rb); // Call the base ApplyBoost method to apply the boost force
+        float accumulatedVelocityMagnitude = previousSpeed + boostForce;
+        Vector3 launchDirection = new Vector3(1, 1, 0).normalized;
+        Vector3 finalForce = launchDirection * accumulatedVelocityMagnitude;
 
-        // Apply additional bounce force
-        rb.AddForce(new Vector3(1,1,0) * boostForce, ForceMode2D.Impulse);
+        rb.AddForce(finalForce, forceMode);
 
     }
 }

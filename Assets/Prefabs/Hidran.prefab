@@ -143,6 +143,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70c969438b79eba4394385c9227d70a3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  boostForce: 50
+  boostForce: 25
+  forceMode: 1
   launchDirection: {x: 0.5, y: 2, z: 0}
-  launchForce: 50

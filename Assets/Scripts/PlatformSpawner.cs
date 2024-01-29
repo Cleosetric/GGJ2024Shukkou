@@ -22,7 +22,7 @@ public class PlatformSpawner : MonoBehaviour
     void Update()
     {
         // Check if camera boundary reaches outside the length of the platform
-        Debug.Log("is camera outside bound : "+IsCameraBoundaryOutsidePlatform());
+        // Debug.Log("is camera outside bound : "+IsCameraBoundaryOutsidePlatform());
         if (IsCameraBoundaryOutsidePlatform())
         {
             // Spawn platform
