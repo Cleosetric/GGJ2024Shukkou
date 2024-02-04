@@ -12,6 +12,7 @@ public class Bouncer : Boost
         Vector3 finalForce = launchDirection * accumulatedVelocityMagnitude;
 
         rb.AddForce(finalForce, forceMode);
+        GameManager.Instance.UpdateZoom();
 
     }
 }

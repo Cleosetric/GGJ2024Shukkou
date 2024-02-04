@@ -14,5 +14,7 @@ public class Launcher : Boost
         Vector3 finalForce = direction * accumulatedVelocityMagnitude;
 
         rb.AddForce(finalForce, forceMode);
+        GameManager.Instance.UpdateZoom();
+
     }
 }

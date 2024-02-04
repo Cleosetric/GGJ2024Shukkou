@@ -9,22 +9,16 @@ public class PlayerController : MonoBehaviour
 {
     public float rotationSpeed = 5f;
     public float launchForce = 10f;
-    public float zoomOutAmount = 5f;
-    public float zoomSpeed = 1.5f;
-    public float zoomDuration = 3f;
+
     public float raycastDistance;
     public GameObject sprite;
     public TextMeshProUGUI textSpeed;
-    private float originalOrthographicSize;
     private Rigidbody2D rb;
-    private CinemachineVirtualCamera virtualCamera;
-    private Coroutine zoomCoroutine;
-    float previousSpeed;
+    private float previousSpeed;
+    private bool touchingGround;
 
-    void Awake()
+    void Start()
     {
-        virtualCamera = FindObjectOfType<CinemachineVirtualCamera>();
-        originalOrthographicSize = virtualCamera.m_Lens.OrthographicSize;
         rb = GetComponent<Rigidbody2D>();
         textSpeed.SetText("");
     } 
@@ -32,66 +26,35 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         RotateCylinder();
-        // RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, raycastDistance);
-        // Debug.DrawRay(transform.position, Vector2.down * raycastDistance, Color.white);
-        // if (hit.collider != null && hit.collider.CompareTag("Platform"))
-        // {
-        //     Debug.DrawRay(transform.position, Vector2.down * raycastDistance, Color.red);
-        //     virtualCamera.m_Lens.OrthographicSize = Mathf.Lerp(virtualCamera.m_Lens.OrthographicSize, zoomOutAmount, Time.deltaTime * zoomDuration);
-        // } 
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, raycastDistance);
+        Debug.DrawRay(transform.position, Vector2.down * raycastDistance, Color.white);
+        if (hit.collider != null && hit.collider.CompareTag("Platform"))
+        {
+            Debug.DrawRay(transform.position, Vector2.down * raycastDistance, Color.red);
+            // virtualCamera.m_Lens.OrthographicSize = Mathf.Lerp(virtualCamera.m_Lens.OrthographicSize, zoomOutAmount, Time.deltaTime * zoomDuration);
+            touchingGround = true;
+        }else{
+            touchingGround = false;
+        }
 
         previousSpeed = rb.velocity.magnitude;
-        string speed = Mathf.FloorToInt(previousSpeed).ToString();
+        string speed = Mathf.FloorToInt((previousSpeed -5)/10).ToString() + " m/s";
         textSpeed.SetText(speed);
     }
 
-    public void UpdateZoom(){
-        if (zoomCoroutine != null)
-        {
-            StopCoroutine(zoomCoroutine);
-        }
-        zoomCoroutine = StartCoroutine(ZoomInOut());
+    public bool IsTouchingGround(){
+        return touchingGround;
     }
 
-    IEnumerator ZoomInOut()
-    {
-        // Zoom out
-        float targetSize = zoomOutAmount;
-        float elapsedTime = 0f;
-        while (elapsedTime < zoomDuration)
-        {
-            virtualCamera.m_Lens.OrthographicSize = Mathf.Lerp(virtualCamera.m_Lens.OrthographicSize, targetSize, elapsedTime / zoomDuration);
-            elapsedTime += Time.deltaTime;
-            yield return null;
-        }
-        virtualCamera.m_Lens.OrthographicSize = targetSize;
-
-        // Wait for a short duration
-        yield return new WaitForSeconds(1f); // Adjust this value as needed
-
-        // Zoom back in
-        elapsedTime = 0f;
-        while (elapsedTime < zoomDuration)
-        {
-            virtualCamera.m_Lens.OrthographicSize = Mathf.Lerp(virtualCamera.m_Lens.OrthographicSize, originalOrthographicSize, elapsedTime / zoomDuration);
-            elapsedTime += Time.deltaTime;
-            yield return null;
-        }
-        virtualCamera.m_Lens.OrthographicSize = originalOrthographicSize;
-    }
 
     void RotateCylinder()
     {
         sprite.transform.Rotate(transform.forward, rotationSpeed * Time.deltaTime);
     }
 
-    public void ResetRotation(){
-        sprite.transform.Rotate(new Vector3(0,0,-65), Space.Self);
-    }
-
     public void ApplyUpForce()
     {
-        UpdateZoom();
+        GameManager.Instance.UpdateZoom();
         float previousSpeed = rb.velocity.magnitude;
         rb.velocity = Vector3.zero;
         float accumulatedVelocityMagnitude = previousSpeed + launchForce;
@@ -102,7 +65,7 @@ public class PlayerController : MonoBehaviour
 
     public void ApplyDownForce()
     {
-        UpdateZoom();
+        GameManager.Instance.UpdateZoom();
         float previousSpeed = rb.velocity.magnitude;
         rb.velocity = Vector3.zero;
         float accumulatedVelocityMagnitude = previousSpeed + launchForce;
@@ -112,11 +75,21 @@ public class PlayerController : MonoBehaviour
     }
 
     public void FreezeControl(){
-        rb.isKinematic = true;
+        if(rb != null){
+            rb.isKinematic = true;  
+        }else{
+            rb = GetComponent<Rigidbody2D>();
+            rb.isKinematic = true;  
+        }
     }
 
     public void UnFreezeControl(){
-        rb.isKinematic = false;
+        if(rb != null){
+            rb.isKinematic = false;
+        } else{
+            rb = GetComponent<Rigidbody2D>();
+            rb.isKinematic = false;  
+        }
     }
 
     public bool IsPlayerDead(){
@@ -129,9 +102,12 @@ public class PlayerController : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D other) {
         if(other != null && other.gameObject.CompareTag("Platform")){
-            UpdateZoom();
-            Debug.Log("Touch Platform");
-            rb.velocity = Vector3.zero;
+            if(rb != null){
+                rb.velocity = Vector3.zero;
+            }else{
+                rb = GetComponent<Rigidbody2D>();
+                rb.velocity = Vector3.zero;
+            }
             Vector3 launchDirection = new Vector3(1, -1, 0).normalized;
             Vector3 finalForce = launchDirection * previousSpeed;
             rb.AddForce(finalForce, ForceMode2D.Impulse);

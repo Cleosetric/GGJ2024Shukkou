@@ -9,13 +9,13 @@ public class PlatformSpawner : MonoBehaviour
     public Transform spawnPoint; // Point where platforms will spawn
     public float platformLength = 20f; // Length of each platform piece
     private List<GameObject> platforms = new List<GameObject>();
-    private CinemachineVirtualCamera virtualCamera;
+    private Camera cam;
     private float cameraBoundaryX;
     float spawnPointBoundaryX;
 
     void Start()
     {
-        virtualCamera = FindObjectOfType<CinemachineVirtualCamera>();
+        cam = Camera.main;
         SpawnPlatform(0);
     }
 
@@ -32,14 +32,14 @@ public class PlatformSpawner : MonoBehaviour
 
     bool IsCameraBoundaryOutsidePlatform()
     {
-        if (virtualCamera == null)
+        if (cam == null)
         {
             Debug.LogError("Cinemachine virtual camera not found.");
             return false;
         }
 
         // Calculate camera boundary position
-        cameraBoundaryX = virtualCamera.transform.position.x + (virtualCamera.m_Lens.OrthographicSize * virtualCamera.m_Lens.Aspect);
+        cameraBoundaryX = cam.transform.position.x + (cam.orthographicSize * cam.aspect);
 
         // Calculate spawn point boundary position
         spawnPointBoundaryX = spawnPoint.position.x - (platformLength / 2f);

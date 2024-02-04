@@ -19,14 +19,17 @@ public class GameManager : MonoBehaviour
     public GameObject playerUI;
     public GameObject gameOverUI;
     public Transform firstPoint;
+    public CameraController cameraController;
     [Header("UI Reference")]
     [Space]
     public TextMeshProUGUI textScoreGameOver;
     public TextMeshProUGUI textScore;
+    public Button buttonUp;
+    public Button buttonDown;
     public List<Image> liveIcons;
     public Slider sliderPower;
 
-    private static GameManager instance;
+    public static GameManager Instance { get; private set; }
     private bool isPowerActive;
     private bool isGameStart;
     private int lives; 
@@ -34,60 +37,45 @@ public class GameManager : MonoBehaviour
     private float distancePowerUp;
     private Vector3 lastDistancePoint;
 
-
-    // Singleton pattern to ensure only one instance of GameManager exists
-    public static GameManager Instance
-    {
-        get
-        {
-            if (instance == null)
-            {
-                instance = FindObjectOfType<GameManager>();
-
-                if (instance == null)
-                {
-                    GameObject singleton = new GameObject("GameManager");
-                    instance = singleton.AddComponent<GameManager>();
-                }
-            }
-            return instance;
-        }
+    public GameObject GetPlayer(){
+        return player;
     }
+
+    public bool IsGameStarted(){
+        return isGameStart;
+    }
+    
 
     private void Awake()
     {
-        // Ensure only one instance of GameManager exists
-        if (instance == null)
-        {
-            instance = this;
-            // DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-        
-    }
+        if (Instance != null && Instance != this) 
+        { 
+            Destroy(this); 
+        } 
+        else 
+        { 
+            Instance = this; 
+        } 
 
-    private void Start()
-    {
         isGameStart = false;
         isPowerActive = false;
 
         if(player == null){
             player = FindObjectOfType<PlayerController>().gameObject;
         }
-        player.GetComponent<PlayerController>().ResetRotation();
-        player.transform.position = new Vector3(35,6,0);
+
+        if(cameraController == null){
+            cameraController = FindObjectOfType<CameraController>();
+        }
+    }
+
+    private void Start()
+    {
         player.GetComponent<PlayerController>().FreezeControl();
         player.GetComponent<PlayerController>().enabled = false;
         playerUI.gameObject.SetActive(false);
-
-        // foreach (Image iconImage in liveIcons)
-        // {
-        //     iconImage.color = new Color32(255,255,255,255);
-        // }
         gameOverUI.SetActive(false);
+        cameraController.ResetCamera();
     }
     
     private void Update(){
@@ -101,15 +89,32 @@ public class GameManager : MonoBehaviour
             CalculatePointDistance();
         }
         CheckGameOver();
+
+        if(lives > 0){
+            buttonUp.interactable = true;
+        }else{
+            buttonUp.interactable = false;
+        }
+
+        if(isPowerActive){
+            buttonDown.interactable = true;
+        }else{
+            buttonDown.interactable = false;
+        }
+    }
+
+    public void UpdateZoom(){
+        cameraController.UpdateZoom();
     }
 
     private void CheckGameOver()
     {
-        if(isGameStart == true){
-
-        if(player.GetComponent<PlayerController>().IsPlayerDead()){
-            EndGame();
-        }
+        if(isGameStart == true)
+        {
+            PlayerController playerCon = player.GetComponent<PlayerController>();
+            if(playerCon.IsPlayerDead() && playerCon.IsTouchingGround()){
+                EndGame();
+            }
         }
     }
 
@@ -122,13 +127,13 @@ public class GameManager : MonoBehaviour
             // Convert the distance to meters (assuming 1 Unity unit = 1 meter)
             float distanceInMeters = distance / distanceThreshold;
 
-            textScore.SetText("Distance : "+ distanceInMeters.ToString("F2") + " meter");
-            textScoreGameOver.SetText("Distance : "+ distanceInMeters.ToString("F2") + " meter");
+            string score =  Mathf.FloorToInt(distanceInMeters).ToString() + " meter";
+            textScore.SetText("Distance : "+ score);
+            textScoreGameOver.SetText("Distance : "+ score);
             UpdatePowerUp();
         }
     }
 
-    // Add your GameManager functionality here
     public void ControlUp(){
         if(lives > 0){
             player.GetComponent<PlayerController>().ApplyUpForce();
@@ -203,6 +208,7 @@ public class GameManager : MonoBehaviour
             player.GetComponent<PlayerController>().UnFreezeControl();
             player.GetComponent<PlayerController>().enabled = true;
             player.GetComponent<PlayerController>().ApplyUpForce();
+            cameraController.BeginCamera();
             playerUI.gameObject.SetActive(true);
             isGameStart = true;
             lastDistancePoint = firstPoint.transform.position;
