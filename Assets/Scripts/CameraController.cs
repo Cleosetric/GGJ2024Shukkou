@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using Cinemachine;
+using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
@@ -13,27 +13,32 @@ public class CameraController : MonoBehaviour
     // public Transform cameraTarget;
 
     private Coroutine zoomCoroutine;
-    private CinemachineVirtualCamera cam;
+
+    // private CinemachineVirtualCamera cam;
+    private Camera cam;
     private Transform player;
     private float originalOrthographicSize;
 
     // Start is called before the first frame update
     void Start()
     {
-        cam = GetComponent<CinemachineVirtualCamera>();
+        cam = Camera.main; //GetComponent<CinemachineVirtualCamera>();
         player = GameManager.Instance.GetPlayer().transform;
-        originalOrthographicSize = cam.m_Lens.OrthographicSize;
+        originalOrthographicSize = cam.orthographicSize;
     }
 
     // Update is called once per frame
     void Update()
     {
-        if(GameManager.Instance.IsGameStarted()){
-            transform.position = new Vector3(player.position.x, cameraYPos, -10);;
+        if (GameManager.Instance.IsGameStarted())
+        {
+            transform.position = new Vector3(player.position.x, cameraYPos, -10);
+            ;
         }
     }
 
-    public void UpdateZoom(){
+    public void UpdateZoom()
+    {
         if (zoomCoroutine != null)
         {
             StopCoroutine(zoomCoroutine);
@@ -48,13 +53,17 @@ public class CameraController : MonoBehaviour
         float elapsedTime = 0f;
         while (elapsedTime < zoomDuration)
         {
-            cam.m_Lens.OrthographicSize = Mathf.Lerp(cam.m_Lens.OrthographicSize, targetSize, elapsedTime / zoomDuration);
+            cam.orthographicSize = Mathf.Lerp(
+                cam.orthographicSize,
+                targetSize,
+                elapsedTime / zoomDuration
+            );
             // cameraYPos = Mathf.Lerp(6, 14, elapsedTime / zoomDuration);
             elapsedTime += Time.deltaTime;
             yield return null;
         }
         // cameraYPos = 14;
-        cam.m_Lens.OrthographicSize = targetSize;
+        cam.orthographicSize = targetSize;
 
         // Wait for a short duration
         yield return new WaitForSeconds(1f); // Adjust this value as needed
@@ -63,32 +72,38 @@ public class CameraController : MonoBehaviour
         elapsedTime = 0f;
         while (elapsedTime < zoomDuration)
         {
-            cam.m_Lens.OrthographicSize = Mathf.Lerp(cam.m_Lens.OrthographicSize, originalOrthographicSize, elapsedTime / zoomDuration);
+            cam.orthographicSize = Mathf.Lerp(
+                cam.orthographicSize,
+                originalOrthographicSize,
+                elapsedTime / zoomDuration
+            );
             // cameraYPos = Mathf.Lerp(14, 6, elapsedTime / zoomDuration);
             elapsedTime += Time.deltaTime;
             yield return null;
         }
-        cam.m_Lens.OrthographicSize = originalOrthographicSize;
+        cam.orthographicSize = originalOrthographicSize;
         // cameraYPos = 6;
     }
 
-    public void ResetCamera(){
+    public void ResetCamera()
+    {
         // if(cam == null){
         //     cam = GetComponent<Camera>();
         //     camPos = cam.transform;
         // }
         // cam.transform.position = new Vector3(14, cameraYPos, camPos.position.z)
-        Vector3 newPosition = new Vector3(20, cameraYPos,-10);
+        Vector3 newPosition = new Vector3(20, cameraYPos, -10);
         transform.position = newPosition;
     }
 
-    public void BeginCamera(){
+    public void BeginCamera()
+    {
         // if(cam == null){
         //     cam = GetComponent<Camera>();
         //     camPos = cam.transform;
         // }
         // cam.transform.position = new Vector3(player.position.x,cameraYPos, camPos.position.z);
-        Vector3 newPosition = new Vector3(player.position.x, cameraYPos,-10);
+        Vector3 newPosition = new Vector3(player.position.x, cameraYPos, -10);
         transform.position = newPosition;
     }
 }
