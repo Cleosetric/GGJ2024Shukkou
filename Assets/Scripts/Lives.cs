@@ -4,12 +4,13 @@ using UnityEngine;
 
 public class Lives : MonoBehaviour
 {
-     private void OnTriggerEnter2D(Collider2D other)
+    private void OnTriggerEnter2D(Collider2D other)
     {
         if (other != null && other.CompareTag("Player"))
         {
-           GameManager.Instance.AddLive();
-           gameObject.SetActive(false);
+            AudioManager.instance.Play("Powerup");
+            GameManager.Instance.AddLive();
+            gameObject.SetActive(false);
         }
     }
 }

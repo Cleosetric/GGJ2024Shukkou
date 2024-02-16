@@ -15,6 +15,6 @@ public class Launcher : Boost
 
         rb.AddForce(finalForce, forceMode);
         GameManager.Instance.UpdateZoom();
-
+        AudioManager.instance.Play("Bump");
     }
 }

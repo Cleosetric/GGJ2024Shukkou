@@ -11,5 +11,6 @@ public class Obstacle : Boost
     {
         rb.velocity *= (1 - linearDamping);
         rb.angularVelocity *= (1 - angularDamping);
+        AudioManager.instance.Play("Crash");
     }
 }

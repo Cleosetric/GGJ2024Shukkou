@@ -1,10 +1,10 @@
 using System;
-using TMPro;
-using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.SceneManagement;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -13,6 +13,7 @@ public class GameManager : MonoBehaviour
     public float minDeathSpeed = 5;
     public float distanceThreshold = 10f; // Distance threshold for each slider increment
     public float maxDistancePower = 100;
+
     [Header("Object Reference")]
     [Space]
     public GameObject player;
@@ -20,6 +21,7 @@ public class GameManager : MonoBehaviour
     public GameObject gameOverUI;
     public Transform firstPoint;
     public CameraController cameraController;
+
     [Header("UI Reference")]
     [Space]
     public TextMeshProUGUI textScoreGameOver;
@@ -32,87 +34,104 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
     private bool isPowerActive;
     private bool isGameStart;
-    private int lives; 
+    private int lives;
     private float distance;
     private float distancePowerUp;
     private Vector3 lastDistancePoint;
 
-    public GameObject GetPlayer(){
+    public GameObject GetPlayer()
+    {
         return player;
     }
 
-    public bool IsGameStarted(){
+    public bool IsGameStarted()
+    {
         return isGameStart;
     }
-    
 
     private void Awake()
     {
-        if (Instance != null && Instance != this) 
-        { 
-            Destroy(this); 
-        } 
-        else 
-        { 
-            Instance = this; 
-        } 
+        if (Instance != null && Instance != this)
+        {
+            Destroy(this);
+        }
+        else
+        {
+            Instance = this;
+        }
 
         isGameStart = false;
         isPowerActive = false;
 
-        if(player == null){
+        if (player == null)
+        {
             player = FindObjectOfType<PlayerController>().gameObject;
         }
 
-        if(cameraController == null){
+        if (cameraController == null)
+        {
             cameraController = FindObjectOfType<CameraController>();
         }
     }
 
     private void Start()
     {
+        ResumeGame();
         player.GetComponent<PlayerController>().FreezeControl();
         player.GetComponent<PlayerController>().enabled = false;
         playerUI.gameObject.SetActive(false);
         gameOverUI.SetActive(false);
         cameraController.ResetCamera();
+        AudioManager.instance.Play("MainTheme");
     }
-    
-    private void Update(){
-        if(!isGameStart){
-            if(Input.GetKeyDown(KeyCode.Space)){
+
+    private void Update()
+    {
+        if (!isGameStart)
+        {
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
                 StartGame();
             }
         }
 
-        if(isGameStart){
+        if (isGameStart)
+        {
             CalculatePointDistance();
         }
         CheckGameOver();
 
-        if(lives > 0){
+        if (lives > 0)
+        {
             buttonUp.interactable = true;
-        }else{
+        }
+        else
+        {
             buttonUp.interactable = false;
         }
 
-        if(isPowerActive){
+        if (isPowerActive)
+        {
             buttonDown.interactable = true;
-        }else{
+        }
+        else
+        {
             buttonDown.interactable = false;
         }
     }
 
-    public void UpdateZoom(){
+    public void UpdateZoom()
+    {
         cameraController.UpdateZoom();
     }
 
     private void CheckGameOver()
     {
-        if(isGameStart == true)
+        if (isGameStart == true)
         {
             PlayerController playerCon = player.GetComponent<PlayerController>();
-            if(playerCon.IsPlayerDead() && playerCon.IsTouchingGround()){
+            if (playerCon.IsPlayerDead() && playerCon.IsTouchingGround())
+            {
                 EndGame();
             }
         }
@@ -120,31 +139,34 @@ public class GameManager : MonoBehaviour
 
     private void CalculatePointDistance()
     {
-        if(player != null)
+        if (player != null)
         {
             // Calculate the distance between the player and the first point
             distance = Vector3.Distance(player.transform.position, firstPoint.position);
             // Convert the distance to meters (assuming 1 Unity unit = 1 meter)
             float distanceInMeters = distance / distanceThreshold;
 
-            string score =  Mathf.FloorToInt(distanceInMeters).ToString() + " meter";
-            textScore.SetText("Distance : "+ score);
-            textScoreGameOver.SetText("Distance : "+ score);
+            string score = Mathf.FloorToInt(distanceInMeters).ToString() + " meter";
+            textScore.SetText("Distance : " + score);
+            textScoreGameOver.SetText("Distance : " + score);
             UpdatePowerUp();
         }
     }
 
-    public void ControlUp(){
-        if(lives > 0){
+    public void ControlUp()
+    {
+        if (lives > 0)
+        {
             player.GetComponent<PlayerController>().ApplyUpForce();
             lives--;
             UpdateLives();
         }
     }
 
-    
-    public void ControlDown(){
-        if(isPowerActive){
+    public void ControlDown()
+    {
+        if (isPowerActive)
+        {
             player.GetComponent<PlayerController>().ApplyDownForce();
             ResetPowerUp();
         }
@@ -152,7 +174,7 @@ public class GameManager : MonoBehaviour
 
     private void UpdatePowerUp()
     {
-        if(!isPowerActive)
+        if (!isPowerActive)
         {
             distancePowerUp = Vector3.Distance(player.transform.position, lastDistancePoint);
 
@@ -163,13 +185,15 @@ public class GameManager : MonoBehaviour
             // Update the slider value
             sliderPower.value = sliderValue;
 
-            if(sliderPower.value >= 1){
+            if (sliderPower.value >= 1)
+            {
                 isPowerActive = true;
             }
         }
     }
 
-    private void ResetPowerUp(){
+    private void ResetPowerUp()
+    {
         sliderPower.value = 0;
         lastDistancePoint = player.transform.position;
         isPowerActive = false;
@@ -182,17 +206,19 @@ public class GameManager : MonoBehaviour
         {
             if (i < iconsToDim)
             {
-                liveIcons[i].color = new Color32(255,255,255,150);
+                liveIcons[i].color = new Color32(255, 255, 255, 150);
             }
             else
             {
-                liveIcons[i].color = new Color32(255,255,255,255);
+                liveIcons[i].color = new Color32(255, 255, 255, 255);
             }
         }
     }
 
-    public void AddLive(){
-        if(lives < startingLives){
+    public void AddLive()
+    {
+        if (lives < startingLives)
+        {
             lives++;
             UpdateLives();
         }
@@ -201,7 +227,8 @@ public class GameManager : MonoBehaviour
     public void StartGame()
     {
         Debug.Log("Game Started!");
-        if(player != null){
+        if (player != null)
+        {
             sliderPower.value = 0;
             lives = startingLives;
             UpdateLives();
@@ -215,28 +242,36 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void RestartGame(){
+    public void RestartGame()
+    {
+        AudioManager.instance.Stop("GameOver");
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         gameOverUI.SetActive(false);
     }
 
     public void EndGame()
     {
+        PauseGame();
         Debug.Log("Game Ended!");
         isGameStart = false;
         gameOverUI.SetActive(true);
-        
+        AudioManager.instance.Stop("MainTheme");
+        AudioManager.instance.Play("GameOver");
     }
 
-    public void PauseGame(){
+    public void PauseGame()
+    {
         Time.timeScale = 0;
     }
 
-    public void ResumeGame(){
+    public void ResumeGame()
+    {
         Time.timeScale = 1;
     }
 
-    public void ExitMenu(){
+    public void ExitMenu()
+    {
+        AudioManager.instance.Stop("GameOver");
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex - 1);
     }
 }
